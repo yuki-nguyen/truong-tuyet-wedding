@@ -17,9 +17,10 @@ async function ensureSchema(e){
     e.DB.prepare("CREATE TABLE IF NOT EXISTS abuse_counters(bucket TEXT PRIMARY KEY,count INTEGER NOT NULL DEFAULT 0,expires_at INTEGER NOT NULL)"),
     e.DB.prepare("CREATE INDEX IF NOT EXISTS ix_abuse_exp ON abuse_counters(expires_at)")
   ]).then(async function(){
+    /* Keep request-time schema checks read-only. D1 ALTER/DDL belongs in migrations;
+       doing ALTER here can block concurrent RSVP requests on mobile. */
     let cols=(await e.DB.prepare("PRAGMA table_info(rsvps)").all()).results||[];
-    if(!cols.some(function(c){return c.name==='event_side'}))await e.DB.prepare("ALTER TABLE rsvps ADD COLUMN event_side TEXT CHECK(event_side IS NULL OR event_side IN('groom','bride'))").run();
-    await e.DB.prepare("CREATE INDEX IF NOT EXISTS ix_rsvp_event_side ON rsvps(event_side,updated_at DESC)").run();
+    if(!cols.some(function(c){return c.name==='event_side'}))console.warn('D1 migration 0002_event_side.sql has not been applied yet');
   }).catch(function(err){schemaReady=null;throw err});
   return schemaReady;
 }
