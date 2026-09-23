@@ -632,3 +632,6 @@ body.rsvp-open{position:static!important;width:auto!important;left:auto!importan
 .gift-qr-image{display:block;width:min(76vw,330px);max-height:52dvh;object-fit:contain;margin:8px auto 12px;border-radius:14px}
 #giftModal.gift-single>b{display:block;color:var(--wine);letter-spacing:.04em;margin:6px 0}
 #giftModal.gift-single>span{display:block;margin:0 0 4px}
+
+/* iOS Safari: form controls below 16px trigger automatic page zoom on focus. */
+@supports (-webkit-touch-callout:none){.rsvp-state input,.rsvp-state textarea{font-size:16px!important}}
