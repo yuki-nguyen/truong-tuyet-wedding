@@ -468,3 +468,40 @@ function sendRsvpJson(path,payload){return new Promise(function(resolve,reject){
   window.addEventListener('pageshow',resume);
   window.addEventListener('focus',resume);
 })();
+
+/* ===== V2.2 local HTML5 wedding audio =====
+   Local MP3 is authoritative; legacy YouTube handlers may remain but window.player
+   is replaced with this adapter so existing controls continue to work unchanged. */
+(function(){
+  var audio=document.getElementById('weddingAudio');
+  var music=document.getElementById('musicBtn')||document.getElementById('music')||document.getElementById('musicControl')||document.getElementById('topMusic');
+  if(!audio)return;
+  audio.loop=true;
+  audio.preload='auto';
+  var wanted=false;
+  function state(){return !audio.paused&&!audio.ended?1:2}
+  function visual(){if(music){music.classList.toggle('playing',state()===1);music.setAttribute('aria-pressed',state()===1?'true':'false')}}
+  function play(){wanted=true;var p;try{p=audio.play()}catch(e){}if(p&&p.catch)p.catch(function(){});setTimeout(visual,50)}
+  function pause(){wanted=false;try{audio.pause()}catch(e){}visual()}
+  window.player={
+    playVideo:play,
+    pauseVideo:pause,
+    getPlayerState:state
+  };
+  window.playerReady=true;
+  audio.addEventListener('play',function(){wanted=true;visual()});
+  audio.addEventListener('pause',visual);
+  audio.addEventListener('ended',visual);
+
+  /* Existing seal handlers call window.player.playVideo() inside the user gesture,
+     which unlocks audio on iOS. */
+  document.addEventListener('visibilitychange',function(){
+    if(document.hidden){
+      if(state()===1)wanted=true;
+    }else if(wanted&&document.body.classList.contains('invite-opened')){
+      setTimeout(play,60);
+    }
+  });
+  window.addEventListener('pageshow',function(){if(wanted&&document.body.classList.contains('invite-opened'))setTimeout(play,60)});
+  window.addEventListener('focus',function(){if(wanted&&document.body.classList.contains('invite-opened'))setTimeout(play,80)});
+})();
