@@ -2,7 +2,7 @@
 var EVENT_SIDE=location.pathname.replace(/\/+$/,'')==='/gai'?'bride':'groom';
 var EVENT_CONFIG={
  groom:{path:'/trai',dateISO:'2026-11-07T09:00:00+07:00',dateText:'07 · 11 · 2026',day:'07',month:'11',weekday:'THỨ BẢY',lunar:'Tức ngày 29 tháng 09 năm Bính Ngọ',venue:'HOA VIÊN VƯỜN DỪA',address:'811/42/58 đường 711A, khu dân cư Bách Khoa, Long Trường, Hồ Chí Minh',map:'https://maps.app.goo.gl/GRdkYV1fZnuMcK788?g_st=ic',time:'11:00',timeLabel:'ĐÓN KHÁCH',secondTime:'12:00',secondLabel:'KHAI TIỆC'},
- bride:{path:'/gai',dateISO:'2026-10-25T08:30:00+07:00',dateText:'25 · 10 · 2026',day:'25',month:'10',weekday:'CHỦ NHẬT',lunar:'',venue:'TƯ GIA NHÀ GÁI',address:'Xóm Xuân Thành, Xã Cát Ngạn, Nghệ An',map:'https://maps.app.goo.gl/m9Dty3agavvajB9k6?g_st=ic',time:'08:30',timeLabel:'LỄ TÂN HÔN',secondTime:'',secondLabel:''}
+ bride:{path:'/gai',dateISO:'2026-10-25T10:30:00+07:00',dateText:'25 · 10 · 2026',day:'25',month:'10',weekday:'CHỦ NHẬT',lunar:'Tức ngày 16 tháng 09 năm Bính Ngọ',venue:'TƯ GIA NHÀ GÁI',address:'Xóm Xuân Thành, Xã Cát Ngạn, Nghệ An',map:'https://maps.app.goo.gl/m9Dty3agavvajB9k6?g_st=ic',time:'10:30',timeLabel:'ĐÓN KHÁCH',secondTime:'11:00',secondLabel:'ĐÃI TIỆC'}
 },EVENT=EVENT_CONFIG[EVENT_SIDE];
 window.WEDDING_SIDE=EVENT_SIDE;window.WEDDING_EVENT=EVENT;
 function applyEventConfig(){
@@ -16,7 +16,12 @@ function applyEventConfig(){
  if(items[1]){if(EVENT.secondTime){var b2=items[1].querySelector('b'),sm2=items[1].querySelector('small');if(b2)b2.textContent=EVENT.secondTime;if(sm2)sm2.textContent=EVENT.secondLabel}else{items[1].style.display='none';var rule=document.querySelector('.timeline-rule');if(rule)rule.style.display='none'}}
  document.querySelectorAll('.countdown-date,.success-date,.ending .end-copy span').forEach(function(x){x.textContent=EVENT.dateText});
 }
-applyEventConfig();var $=function(s){return document.querySelector(s)},$$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s))};var envelope=$('#envelope'),dock=$('#dock'),music=$('#musicBtn'),stream=$('#wishStream'),backdrop=$('#backdrop'),wishModal=$('#wishModal'),giftModal=$('#giftModal');var player=null,playerReady=false,musicOn=false;
+applyEventConfig();
+if(EVENT_SIDE==='bride'){
+ document.querySelectorAll('h1,h2,h3,h4,.caps,.venue-label').forEach(function(x){
+   if(/^LỄ TÂN HÔN$/i.test((x.textContent||'').trim()))x.textContent='LỄ VU QUY';
+ });
+}var $=function(s){return document.querySelector(s)},$$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s))};var envelope=$('#envelope'),dock=$('#dock'),music=$('#musicBtn'),stream=$('#wishStream'),backdrop=$('#backdrop'),wishModal=$('#wishModal'),giftModal=$('#giftModal');var player=null,playerReady=false,musicOn=false;
 function postJson(path,payload){
   return new Promise(function(resolve,reject){
     var x=new XMLHttpRequest();
