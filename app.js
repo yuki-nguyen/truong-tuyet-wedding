@@ -7,7 +7,7 @@ var EVENT_CONFIG={
 window.WEDDING_SIDE=EVENT_SIDE;window.WEDDING_EVENT=EVENT;
 function applyEventConfig(){
  document.title='Trường & Tuyết · '+EVENT.dateText.replace(/ · /g,'.');
- var hero=document.querySelector('.hero-copy p');if(hero)hero.textContent=EVENT.dateText;
+ var hero=document.querySelector('.hero-copy p');if(hero)hero.textContent=EVENT.dateText;var kicker=document.querySelector('.invite-kicker');if(kicker)kicker.textContent=EVENT_SIDE==='bride'?'THAM DỰ LỄ VU QUY':'THAM DỰ LỄ TÂN HÔN';
  var wd=document.querySelector('.date-weekday');if(wd)wd.textContent=EVENT.weekday;
  var dm=document.querySelector('.date-main');if(dm)dm.innerHTML='<strong>'+EVENT.day+'</strong><span>THÁNG '+EVENT.month+'<br>NĂM 2026</span>';
  var lunar=document.querySelector('.lunar');if(lunar){lunar.textContent=EVENT.lunar;lunar.hidden=!EVENT.lunar}
