@@ -18,8 +18,9 @@ function applyEventConfig(){
 }
 applyEventConfig();
 if(EVENT_SIDE==='bride'){
- document.querySelectorAll('h1,h2,h3,h4,.caps,.venue-label').forEach(function(x){
-   if(/^LỄ TÂN HÔN$/i.test((x.textContent||'').trim()))x.textContent='LỄ VU QUY';
+ document.querySelectorAll('h1,h2,h3,h4,.caps,.venue-label,.invite-line,p,span').forEach(function(x){
+   var t=(x.textContent||'').trim();
+   if(/LỄ TÂN HÔN/i.test(t)&&x.children.length===0)x.textContent=t.replace(/LỄ TÂN HÔN/ig,'LỄ VU QUY');
  });
 }var $=function(s){return document.querySelector(s)},$$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s))};var envelope=$('#envelope'),dock=$('#dock'),music=$('#musicBtn'),stream=$('#wishStream'),backdrop=$('#backdrop'),wishModal=$('#wishModal'),giftModal=$('#giftModal');var player=null,playerReady=false,musicOn=false;
 function postJson(path,payload){
