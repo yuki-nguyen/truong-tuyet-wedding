@@ -8,5 +8,5 @@ not_found_handling = "single-page-application"
 [[d1_databases]]
 binding = "DB"
 database_name = "truong-tuyet-wedding"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id = "1db8e8eb-fefa-464b-9f64-183f24c58013"
 migrations_dir = "migrations"
