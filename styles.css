@@ -661,6 +661,11 @@ body.rsvp-open{position:static!important;width:auto!important;left:auto!importan
 .wish-stream .bubble { box-sizing: border-box; max-width: calc(100% - 40px); overflow-wrap: anywhere; line-height: 1.45; margin: 5px 0; animation: wishGlide 6.2s cubic-bezier(.22,1,.36,1) forwards; will-change: opacity, transform; }
 @keyframes wishGlide { 0% { opacity: 0; transform: translateY(16px); } 15%, 72% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-12px); } }
 @media (prefers-reduced-motion: reduce) { .wish-stream .bubble { animation: wishFade 6.2s linear forwards !important; } @keyframes wishFade { 0%,100% { opacity:0 } 15%,72% { opacity:1 } } }
+/* Move each wish independently at a steady speed, from below the clip to above it. */
+.wish-stream { height: min(28vh, 210px); max-height: none; display: none; }
+.wish-stream .bubble { position: absolute; left: 14px; width: max-content; max-width: calc(100% - 42px); margin: 0; animation: wishScroll linear forwards; }
+@keyframes wishScroll { from { opacity: 1; transform: translate3d(0,0,0); } to { opacity: 1; transform: translate3d(0,var(--wish-travel),0); } }
+@media (prefers-reduced-motion: reduce) { .wish-stream .bubble { animation-duration: 0.01ms !important; } }
 
 /* Desktop keeps the same 430px layout and animation geometry as a phone.
    RSVP lives inside main, so it must be constrained separately from body children. */
