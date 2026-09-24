@@ -739,6 +739,9 @@ body.rsvp-open{position:static!important;width:auto!important;left:auto!importan
 .gallery .film-incoming.is-visible { opacity: 1; }
 .dock { grid-template-columns: minmax(0,1fr) 90px 66px; }
 #rsvpDock small { line-height: 1.1; }
+/* Keep the dock laid out beneath the RSVP overlay, just like the gift sheet.
+   The overlay's higher z-index covers it until the dialog closes. */
+body.rsvp-open .dock.show { display: grid !important; }
 .gallery .film-counter { z-index: 2; }
 @media (prefers-reduced-motion: reduce) {
   .gallery .film-incoming { transition-duration: .01ms; }
