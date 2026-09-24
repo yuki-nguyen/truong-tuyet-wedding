@@ -129,6 +129,7 @@ function bubble(n,m){
  var height=b.offsetHeight,travel=stream.clientHeight+height+12,speed=28;
  b.style.top=stream.clientHeight+'px';
  b.style.setProperty('--wish-travel',-travel+'px');
+ b.style.setProperty('--wish-duration',(travel/speed)+'s');
  b.style.animationDuration=(travel/speed)+'s';
  lastWishAt=Date.now();
  b.addEventListener('animationend',function(){b.remove()},{once:true});
