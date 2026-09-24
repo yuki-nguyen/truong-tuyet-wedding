@@ -108,14 +108,50 @@ var gal=$('#gallery'),albumIndex=0;
 var viewer=document.createElement('div');viewer.className='film-viewer reveal';
 viewer.innerHTML='<div class="film-main-wrap"><img id="filmMain" class="film-main" alt="Ảnh cưới Trường và Tuyết"><span id="filmCounter" class="film-counter"></span></div><div id="filmQuote" class="film-quote"></div><div id="filmStrip" class="film-strip" aria-label="Cuộn phim ảnh cưới"></div><div class="film-hint">Vuốt cuộn phim · chạm ảnh lớn để xem toàn màn hình</div>';
 gal.appendChild(viewer);if(io)io.observe(viewer);else viewer.classList.add('visible');
-var filmMain=$('#filmMain'),filmCounter=$('#filmCounter'),filmQuote=$('#filmQuote'),filmStrip=$('#filmStrip');
+var filmMain=$('#filmMain'),filmFrame=$('.film-main-wrap'),filmCounter=$('#filmCounter'),filmQuote=$('#filmQuote'),filmStrip=$('#filmStrip');
 album.forEach(function(n,i){var b=document.createElement('button');b.type='button';b.className='film-thumb'+(i===0?' active':'');b.dataset.i=i;b.setAttribute('aria-label','Xem ảnh '+(i+1));b.innerHTML='<img src="assets/'+n+'" alt="">';filmStrip.appendChild(b)});
-function selectAlbum(i,instant,userInitiated){albumIndex=(i+album.length)%album.length;var done=function(){filmMain.src='assets/'+album[albumIndex];filmMain.dataset.i=albumIndex;filmCounter.textContent=String(albumIndex+1).padStart(2,'0')+' / '+album.length;filmQuote.textContent=albumQuotes[Math.min(albumQuotes.length-1,Math.floor(albumIndex/(album.length/albumQuotes.length)))];$$('.film-thumb').forEach(function(x,j){x.classList.toggle('active',j===albumIndex)});var active=$$('.film-thumb')[albumIndex];if(userInitiated&&active&&active.scrollIntoView)active.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});filmMain.classList.remove('switching')};if(instant){done()}else{filmMain.classList.add('switching');setTimeout(done,190)}}
+var albumRequest=0,albumOverlay=null,albumFinish=null;
+function updateAlbumDetails(i,userInitiated){
+ filmCounter.textContent=String(i+1).padStart(2,'0')+' / '+album.length;
+ filmQuote.textContent=albumQuotes[Math.min(albumQuotes.length-1,Math.floor(i/(album.length/albumQuotes.length)))];
+ $$('.film-thumb').forEach(function(x,j){x.classList.toggle('active',j===i)});
+ var active=$$('.film-thumb')[i];
+ if(userInitiated&&active){
+  var target=active.offsetLeft-(filmStrip.clientWidth-active.offsetWidth)/2;
+  filmStrip.scrollTo({left:target,behavior:'smooth'});
+ }
+}
+function readyAlbumImage(src){return new Promise(function(resolve,reject){
+ var img=new Image(),settled=false;
+ function loaded(){if(settled)return;settled=true;if(img.decode)img.decode().then(function(){resolve(img)},function(){resolve(img)});else resolve(img)}
+ img.onload=loaded;img.onerror=function(){if(!settled){settled=true;reject(new Error('Không tải được ảnh album'))}};
+ img.src=src;if(img.complete&&img.naturalWidth)loaded();
+})}
+function selectAlbum(i,instant,userInitiated){
+ var next=(i+album.length)%album.length,request=++albumRequest;
+ if(albumFinish)albumFinish();
+ albumIndex=next;
+ if(instant){filmMain.src='assets/'+album[next];filmMain.dataset.i=next;updateAlbumDetails(next,false);return}
+ if(filmMain.dataset.i===String(next)){updateAlbumDetails(next,userInitiated);return}
+ readyAlbumImage('assets/'+album[next]).then(function(ready){
+  if(request!==albumRequest)return;
+  var overlay=document.createElement('img');overlay.className='film-main film-incoming';overlay.alt='';overlay.src=ready.src;
+  filmFrame.insertBefore(overlay,filmCounter);albumOverlay=overlay;
+  updateAlbumDetails(next,userInitiated);
+  var finished=false,timer;
+  albumFinish=function(){if(finished)return;finished=true;clearTimeout(timer);filmMain.src=ready.src;filmMain.dataset.i=next;overlay.remove();albumOverlay=null;albumFinish=null};
+  overlay.addEventListener('transitionend',function(e){if(e.target===overlay&&e.propertyName==='opacity'&&request===albumRequest)albumFinish()});
+  // Let the transparent layer paint once before starting its fade.
+  requestAnimationFrame(function(){requestAnimationFrame(function(){if(request===albumRequest)overlay.classList.add('is-visible')})});
+  timer=setTimeout(function(){if(request===albumRequest&&albumFinish)albumFinish()},480);
+ }).catch(function(){if(request===albumRequest){albumIndex=Number(filmMain.dataset.i)||0;updateAlbumDetails(albumIndex,false)}});
+}
 selectAlbum(0,true,false);
 // Swipe directly on the large album photo. Horizontal gestures change photo; vertical gestures keep normal page scrolling.
-var filmStartX=0,filmStartY=0,filmTracking=false;
-filmMain.addEventListener('touchstart',function(e){if(!e.touches||!e.touches.length)return;filmStartX=e.touches[0].clientX;filmStartY=e.touches[0].clientY;filmTracking=true},{passive:true});
-filmMain.addEventListener('touchend',function(e){if(!filmTracking||!e.changedTouches||!e.changedTouches.length)return;filmTracking=false;var dx=e.changedTouches[0].clientX-filmStartX,dy=e.changedTouches[0].clientY-filmStartY;if(Math.abs(dx)>48&&Math.abs(dx)>Math.abs(dy)*1.15){filmSwiped=true;selectAlbum(albumIndex+(dx<0?1:-1),false,true);setTimeout(function(){filmSwiped=false},450)}},{passive:true});
+var filmStartX=0,filmStartY=0,filmTracking=false,filmPointerId=null;
+filmFrame.addEventListener('pointerdown',function(e){filmStartX=e.clientX;filmStartY=e.clientY;filmPointerId=e.pointerId;filmTracking=true});
+filmFrame.addEventListener('pointerup',function(e){if(!filmTracking||e.pointerId!==filmPointerId)return;filmTracking=false;var dx=e.clientX-filmStartX,dy=e.clientY-filmStartY;if(Math.abs(dx)>48&&Math.abs(dx)>Math.abs(dy)*1.15){filmSwiped=true;selectAlbum(albumIndex+(dx<0?1:-1),false,true);setTimeout(function(){filmSwiped=false},450)}});
+filmFrame.addEventListener('pointercancel',function(){filmTracking=false});
 filmStrip.addEventListener('click',function(e){var b=e.target.closest('.film-thumb');if(b)selectAlbum(Number(b.dataset.i),false,true)});
 function openSheet(s){backdrop.classList.add('open');s.classList.add('open');stream.style.display='none'}function closeSheets(){backdrop.classList.remove('open');wishModal.classList.remove('open');giftModal.classList.remove('open');stream.style.display='flex'}$('#wishOpen').onclick=function(){openSheet(wishModal)};var giftDock=$('#gift'),giftBody=$('#giftBody');if(giftDock)giftDock.onclick=function(){openSheet(giftModal)};if(giftBody)giftBody.onclick=function(){openSheet(giftModal)};backdrop.onclick=closeSheets;$$('.close').forEach(function(x){x.onclick=closeSheets});
 var wishHidden=false,wishQueue=[],wi=0,wishTimer=null,lastWishAt=0,lastWishSpacing=2000;
