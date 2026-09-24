@@ -714,7 +714,7 @@ body.rsvp-open{position:static!important;width:auto!important;left:auto!importan
 
 /* The album's large portrait keeps its original 2:3 aspect ratio. A fixed
    viewport height plus object-fit:cover cut off the top and bottom. */
-.film-main {
+.gallery .film-main {
   height: auto;
   min-height: 0;
   max-height: none;
