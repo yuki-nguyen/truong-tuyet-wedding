@@ -661,3 +661,36 @@ body.rsvp-open{position:static!important;width:auto!important;left:auto!importan
 .wish-stream .bubble { box-sizing: border-box; max-width: calc(100% - 40px); overflow-wrap: anywhere; line-height: 1.45; margin: 5px 0; animation: wishGlide 6.2s cubic-bezier(.22,1,.36,1) forwards; will-change: opacity, transform; }
 @keyframes wishGlide { 0% { opacity: 0; transform: translateY(16px); } 15%, 72% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-12px); } }
 @media (prefers-reduced-motion: reduce) { .wish-stream .bubble { animation: wishFade 6.2s linear forwards !important; } @keyframes wishFade { 0%,100% { opacity:0 } 15%,72% { opacity:1 } } }
+
+/* Desktop keeps the same 430px layout and animation geometry as a phone.
+   RSVP lives inside main, so it must be constrained separately from body children. */
+@media (min-width: 600px) {
+  .rsvp-overlay {
+    left: calc((100vw - 430px)/2) !important;
+    right: calc((100vw - 430px)/2) !important;
+    width: 430px !important;
+  }
+  .demo-cover { width: 430px !important; }
+  .demo-cover .opening-art { width: 430px !important; }
+  .invite { padding-top: 54px !important; }
+  .invite-inner { padding-inline: 21.5px; }
+  .invite-title { font-size: 66.65px !important; }
+  .invite .guest { font-size: 29.24px !important; }
+  .date-weekday { font-size: 25.8px; }
+  .date-main strong { font-size: 73.1px; }
+  .invite .venue-card h3 { font-size: 24.94px !important; }
+  #invitation .invite-photo { width: 82% !important; max-width: 380px !important; }
+  .countdown-bg { object-position: center center; }
+  .countdown-content { padding-inline: 21.5px; bottom: max(8.5svh,76px); }
+  .countdown-names { font-size: 60.2px !important; }
+  .countdown-kicker { font-size: 43px; }
+  .countdown-photo .countdown-grid { width: 94%; gap: 8.6px; }
+  .countdown-photo .countdown-grid b { font-size: 43px; }
+  .countdown-photo .countdown-grid span { font-size: 9px; }
+  .countdown-after { padding-inline: 30.1px !important; }
+  .countdown-after p { font-size: 16.125px; }
+  .letter-cta { font-size: 12.9px; }
+  .rsvp-panel { padding-inline: 22px !important; }
+  .rsvp-state h2 { font-size: 21.93px !important; }
+  .gift-qr-image { width: min(326.8px,330px); }
+}
