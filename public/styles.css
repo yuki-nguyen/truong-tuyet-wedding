@@ -435,6 +435,7 @@ body.locked{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;oversc
 }
 .demo-cover.open .demo-open-btn{pointer-events:none;}
 .vuquy-opening .demo-cover{background:#720b10 url('assets/opening-vuquy.jpeg') center center/cover no-repeat!important;}
+.vuquy-opening .demo-cover.opening,.vuquy-opening .demo-cover.open{background:transparent!important;}
 .vuquy-opening .demo-cover .opening-art{width:200%;}
 @media (orientation:landscape) and (max-height:600px){
   .demo-cover .opening-art{object-fit:cover;}
