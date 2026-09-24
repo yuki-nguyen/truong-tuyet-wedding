@@ -504,44 +504,6 @@ m.addEventListener('click',function(e){e.stopPropagation();try{if(window.player&
 function sendRsvpJson(path,payload){return new Promise(function(resolve,reject){var x=new XMLHttpRequest();x.open('POST',location.origin+path,true);x.setRequestHeader('Content-Type','application/json;charset=UTF-8');x.setRequestHeader('Accept','application/json');x.onreadystatechange=function(){if(x.readyState!==4)return;var d=null;try{d=x.responseText?JSON.parse(x.responseText):{}}catch(e){return reject(Error('Phản hồi từ máy chủ không hợp lệ.'))}if(x.status>=200&&x.status<300)return resolve(d);reject(Error(d&&d.error?d.error:'Chưa thể kết nối máy chủ.'))};x.onerror=function(){reject(Error('Không thể kết nối máy chủ. Vui lòng thử lại.'))};try{x.send(JSON.stringify(payload))}catch(e){reject(e)}})};var invitation=null,code='';try{code=(new URLSearchParams(location.search).get('i')||'').trim()}catch(e){}var g=document.getElementById('guest'),wn=document.getElementById('wishName'),rn=document.getElementById('rsvpName');if(code)fetch('/api/invitation?code='+encodeURIComponent(code)).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(i){invitation=i;if(i.side&&i.side!=='shared'&&i.side!==(window.WEDDING_SIDE||(location.pathname.replace(/\/+$/,'')==='/vuquy'?'bride':'groom'))){location.replace((i.side==='bride'?'/vuquy':'/tanhon')+location.search);return}if(g)g.textContent=i.guestName.toUpperCase();if(wn&&!wn.value)wn.value=i.guestName;if(rn&&!rn.value)rn.value=i.guestName}).catch(function(){invitation=null});var send=document.getElementById('rsvpSend');if(!send)return;send.onclick=async function(){var n=document.getElementById('rsvpName'),ne=document.getElementById('rsvpNameError'),er=document.getElementById('rsvpError'),form=document.getElementById('rsvpFormState'),load=document.getElementById('rsvpLoading'),success=document.getElementById('rsvpSuccess'),panel=document.querySelector('#rsvpOverlay .rsvp-panel'),att=document.getElementById('rsvpYes').classList.contains('active'),party=Number(document.getElementById('partyCount').textContent)||1,name=n.value.trim();ne.hidden=!!name;if(!name){n.focus();return}if(att&&invitation&&invitation.maxGuests&&party>invitation.maxGuests){er.textContent='Thiệp này tối đa '+invitation.maxGuests+' người tham dự.';er.hidden=false;return}function state(x){form.hidden=x!='form';load.hidden=x!='loading';success.hidden=x!='success';panel.scrollTop=0}er.hidden=true;state('loading');var eventSide=window.WEDDING_SIDE||(location.pathname.replace(/\/+$/,'')==='/vuquy'?'bride':'groom'),tokenKey='wedding_public_rsvp_token_'+eventSide,t='';try{t=localStorage.getItem(tokenKey)||''}catch(e){}try{var d=await sendRsvpJson('/api/rsvp',{invitationCode:invitation?invitation.code:code,publicResponseToken:invitation?null:t,guestName:name,attending:att,guestCount:att?party:0,message:document.getElementById('rsvpMessage').value.trim(),side:eventSide});if(d.publicResponseToken)try{localStorage.setItem(tokenKey,d.publicResponseToken)}catch(e){}document.getElementById('successIcon').textContent=att?'✓':'♡';document.getElementById('successTitle').textContent=att?'ĐÃ NHẬN XÁC NHẬN':'CẢM ƠN BẠN ĐÃ PHẢN HỒI';document.getElementById('successText').innerHTML=att?'Cảm ơn bạn!<br><br>Hẹn gặp bạn trong ngày chung đôi<br>của chúng mình.':'Chúng mình rất tiếc khi không thể gặp bạn<br>trong ngày vui, nhưng vô cùng trân trọng<br>lời hồi đáp của bạn.';state('success')}catch(e){state('form');er.textContent=e.message||'Chưa thể gửi xác nhận. Vui lòng thử lại.';er.hidden=false}}})();
 
 
-/* ===== V2.1 iOS foreground music resume =====
-   Remember whether music was playing when the document loses visibility.
-   iOS pauses YouTube when the app backgrounds; retry playback when foregrounded. */
-(function(){
-  var shouldResume=false,resumeTimer=0;
-  function playerIsPlaying(){
-    try{return !!(window.player&&typeof window.player.getPlayerState==='function'&&window.player.getPlayerState()===1)}catch(e){return false}
-  }
-  function remember(){
-    if(document.hidden){
-      /* Capture intent before/while iOS suspends the iframe. */
-      if(playerIsPlaying()||document.querySelector('#musicBtn.playing'))shouldResume=true;
-    }
-  }
-  function resume(){
-    if(document.hidden||!shouldResume||!document.body.classList.contains('invite-opened'))return;
-    clearTimeout(resumeTimer);
-    var tries=0;
-    function attempt(){
-      tries++;
-      try{
-        if(window.player&&typeof window.player.playVideo==='function'){
-          if(playerIsPlaying()){shouldResume=false;return}
-          window.player.playVideo();
-          if(playerIsPlaying()){shouldResume=false;return}
-        }
-      }catch(e){}
-      if(tries<5)resumeTimer=setTimeout(attempt,250*tries);
-    }
-    /* Let Safari restore the WebView/iframe before asking YouTube to continue. */
-    resumeTimer=setTimeout(attempt,80);
-  }
-  document.addEventListener('visibilitychange',function(){if(document.hidden)remember();else resume()});
-  window.addEventListener('pagehide',remember);
-  window.addEventListener('pageshow',resume);
-  window.addEventListener('focus',resume);
-})();
-
 /* ===== V2.2 local HTML5 wedding audio =====
    Local MP3 is authoritative; legacy YouTube handlers may remain but window.player
    is replaced with this adapter so existing controls continue to work unchanged. */
@@ -551,30 +513,42 @@ function sendRsvpJson(path,payload){return new Promise(function(resolve,reject){
   if(!audio)return;
   audio.loop=true;
   audio.preload='auto';
-  var wanted=false;
+  var wanted=false,manuallyPaused=false;
   function state(){return !audio.paused&&!audio.ended?1:2}
   function visual(){if(music){music.classList.toggle('playing',state()===1);music.setAttribute('aria-pressed',state()===1?'true':'false')}}
-  function play(){wanted=true;var p;try{p=audio.play()}catch(e){}if(p&&p.catch)p.catch(function(){});setTimeout(visual,50)}
-  function pause(){wanted=false;try{audio.pause()}catch(e){}visual()}
+  function play(){
+    if(manuallyPaused)return;
+    wanted=true;
+    if(document.hidden)return;
+    try{var p=audio.play();if(p&&p.catch)p.catch(visual)}catch(e){visual()}
+  }
+  function pause(){wanted=false;manuallyPaused=true;audio.pause();visual()}
   window.player={
     playVideo:play,
     pauseVideo:pause,
     getPlayerState:state
   };
   window.playerReady=true;
-  audio.addEventListener('play',function(){wanted=true;visual()});
+  audio.addEventListener('play',function(){
+    if(document.hidden||!wanted||manuallyPaused){audio.pause();return}
+    visual();
+  });
   audio.addEventListener('pause',visual);
   audio.addEventListener('ended',visual);
 
   /* Existing seal handlers call window.player.playVideo() inside the user gesture,
      which unlocks audio on iOS. */
-  document.addEventListener('visibilitychange',function(){
-    if(document.hidden){
-      if(state()===1)wanted=true;
-    }else if(wanted&&document.body.classList.contains('invite-opened')){
-      setTimeout(play,60);
-    }
-  });
-  window.addEventListener('pageshow',function(){if(wanted&&document.body.classList.contains('invite-opened'))setTimeout(play,60)});
-  window.addEventListener('focus',function(){if(wanted&&document.body.classList.contains('invite-opened'))setTimeout(play,80)});
+  /* Capture before the older button listeners, which hold stale player state. */
+  if(music)music.addEventListener('click',function(e){
+    e.preventDefault();e.stopImmediatePropagation();
+    if(wanted){pause()}else{manuallyPaused=false;play()}
+  },true);
+  function suspend(){audio.pause();visual()}
+  function resume(){
+    if(!document.hidden&&wanted&&!manuallyPaused&&document.body.classList.contains('invite-opened'))play();
+  }
+  document.addEventListener('visibilitychange',function(){if(document.hidden)suspend();else resume()});
+  window.addEventListener('pagehide',suspend);
+  window.addEventListener('pageshow',resume);
+  window.addEventListener('focus',resume);
 })();
