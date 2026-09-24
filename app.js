@@ -1,5 +1,9 @@
 (function(){'use strict';
 var EVENT_SIDE=location.pathname.replace(/\/+$/,'')==='/vuquy'?'bride':'groom';
+if(EVENT_SIDE==='bride'){
+ document.body.classList.add('vuquy-opening');
+ document.querySelectorAll('#envelope .opening-art').forEach(function(image){image.src='assets/opening-vuquy.jpeg'});
+}
 var EVENT_CONFIG={
  groom:{path:'/tanhon',dateISO:'2026-11-07T09:00:00+07:00',dateText:'07 · 11 · 2026',day:'07',month:'11',weekday:'THỨ BẢY',lunar:'Tức ngày 29 tháng 09 năm Bính Ngọ',venue:'HOA VIÊN VƯỜN DỪA',address:'811/42/58 đường 711A, khu dân cư Bách Khoa, Long Trường, Hồ Chí Minh',map:'https://maps.app.goo.gl/GRdkYV1fZnuMcK788?g_st=ic',time:'11:00',timeLabel:'ĐÓN KHÁCH',secondTime:'12:00',secondLabel:'KHAI TIỆC'},
  bride:{path:'/vuquy',dateISO:'2026-10-25T10:30:00+07:00',dateText:'25 · 10 · 2026',day:'25',month:'10',weekday:'CHỦ NHẬT',lunar:'Tức ngày 16 tháng 09 năm Bính Ngọ',venue:'TƯ GIA NHÀ GÁI',address:'Xóm Xuân Thành, Xã Cát Ngạn, Nghệ An',map:'https://maps.app.goo.gl/m9Dty3agavvajB9k6?g_st=ic',time:'10:30',timeLabel:'ĐÓN KHÁCH',secondTime:'11:00',secondLabel:'ĐÃI TIỆC'}
