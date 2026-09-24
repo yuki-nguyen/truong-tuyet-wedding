@@ -113,8 +113,8 @@ var viewer=document.createElement('div');viewer.className='film-viewer reveal';
 viewer.innerHTML='<div class="film-main-wrap"><img id="filmMain" class="film-main" alt="Ảnh cưới Trường và Tuyết"><span id="filmCounter" class="film-counter"></span></div><div id="filmQuote" class="film-quote"></div><div id="filmStrip" class="film-strip" aria-label="Cuộn phim ảnh cưới"></div><div class="film-hint">Vuốt cuộn phim · chạm ảnh lớn để xem toàn màn hình</div>';
 gal.appendChild(viewer);if(io)io.observe(viewer);else viewer.classList.add('visible');
 var filmMain=$('#filmMain'),filmFrame=$('.film-main-wrap'),filmCounter=$('#filmCounter'),filmQuote=$('#filmQuote'),filmStrip=$('#filmStrip');
-album.forEach(function(n,i){var b=document.createElement('button');b.type='button';b.className='film-thumb'+(i===0?' active':'');b.dataset.i=i;b.setAttribute('aria-label','Xem ảnh '+(i+1));b.innerHTML='<img src="assets/'+n+'" alt="">';filmStrip.appendChild(b)});
-var albumRequest=0,albumOverlay=null,albumFinish=null;
+album.forEach(function(n,i){var b=document.createElement('button');b.type='button';b.className='film-thumb'+(i===0?' active':'');b.dataset.i=i;b.setAttribute('aria-label','Xem ảnh '+(i+1));b.innerHTML='<img src="assets/'+n+'" loading="lazy" decoding="async" fetchpriority="low" alt="">';filmStrip.appendChild(b)});
+var albumRequest=0,albumFinish=null,albumReady=new Map();
 function updateAlbumDetails(i,userInitiated){
  filmCounter.textContent=String(i+1).padStart(2,'0')+' / '+album.length;
  filmQuote.textContent=albumQuotes[Math.min(albumQuotes.length-1,Math.floor(i/(album.length/albumQuotes.length)))];
@@ -125,29 +125,38 @@ function updateAlbumDetails(i,userInitiated){
   filmStrip.scrollTo({left:target,behavior:'smooth'});
  }
 }
-function readyAlbumImage(src){return new Promise(function(resolve,reject){
- var img=new Image(),settled=false;
- function loaded(){if(settled)return;settled=true;if(img.decode)img.decode().then(function(){resolve(img)},function(){resolve(img)});else resolve(img)}
- img.onload=loaded;img.onerror=function(){if(!settled){settled=true;reject(new Error('Không tải được ảnh album'))}};
- img.src=src;if(img.complete&&img.naturalWidth)loaded();
-})}
+function readyAlbumImage(i,priority){
+ i=(i+album.length)%album.length;
+ if(albumReady.has(i))return albumReady.get(i);
+ var promise=new Promise(function(resolve,reject){
+  var img=new Image(),settled=false;
+  img.decoding='async';img.fetchPriority=priority?'high':'low';
+  function loaded(){if(settled)return;settled=true;if(img.decode)img.decode().then(function(){resolve(img)},function(){resolve(img)});else resolve(img)}
+  img.onload=loaded;img.onerror=function(){if(!settled){settled=true;reject(new Error('Không tải được ảnh album'))}};
+  img.src='assets/'+album[i];if(img.complete&&img.naturalWidth)loaded();
+ });
+ albumReady.set(i,promise);
+ promise.catch(function(){if(albumReady.get(i)===promise)albumReady.delete(i)});
+ return promise;
+}
+function warmAlbumNeighbors(i){readyAlbumImage(i+1,false).catch(function(){});readyAlbumImage(i-1,false).catch(function(){})}
 function selectAlbum(i,instant,userInitiated){
  var next=(i+album.length)%album.length,request=++albumRequest;
  if(albumFinish)albumFinish();
  albumIndex=next;
- if(instant){filmMain.src='assets/'+album[next];filmMain.dataset.i=next;updateAlbumDetails(next,false);return}
+ if(instant){filmMain.src='assets/'+album[next];filmMain.dataset.i=next;filmMain.addEventListener('load',function(){warmAlbumNeighbors(next)},{once:true});updateAlbumDetails(next,false);return}
  if(filmMain.dataset.i===String(next)){updateAlbumDetails(next,userInitiated);return}
- readyAlbumImage('assets/'+album[next]).then(function(ready){
+ updateAlbumDetails(next,userInitiated);
+ readyAlbumImage(next,true).then(function(ready){
   if(request!==albumRequest)return;
-  var overlay=document.createElement('img');overlay.className='film-main film-incoming';overlay.alt='';overlay.src=ready.src;
-  filmFrame.insertBefore(overlay,filmCounter);albumOverlay=overlay;
-  updateAlbumDetails(next,userInitiated);
+  var overlay=ready;overlay.className='film-main film-incoming';overlay.alt='Ảnh cưới Trường và Tuyết';overlay.dataset.i=next;
+  filmFrame.insertBefore(overlay,filmCounter);
   var finished=false,timer;
-  albumFinish=function(){if(finished)return;finished=true;clearTimeout(timer);filmMain.src=ready.src;filmMain.dataset.i=next;overlay.remove();albumOverlay=null;albumFinish=null};
+  albumFinish=function(){if(finished)return;finished=true;clearTimeout(timer);overlay.classList.remove('film-incoming');overlay.classList.remove('is-visible');filmMain.remove();filmMain=overlay;albumReady.delete(next);albumFinish=null;warmAlbumNeighbors(next)};
   overlay.addEventListener('transitionend',function(e){if(e.target===overlay&&e.propertyName==='opacity'&&request===albumRequest)albumFinish()});
   // Let the transparent layer paint once before starting its fade.
   requestAnimationFrame(function(){requestAnimationFrame(function(){if(request===albumRequest)overlay.classList.add('is-visible')})});
-  timer=setTimeout(function(){if(request===albumRequest&&albumFinish)albumFinish()},480);
+  timer=setTimeout(function(){if(request===albumRequest&&albumFinish)albumFinish()},380);
  }).catch(function(){if(request===albumRequest){albumIndex=Number(filmMain.dataset.i)||0;updateAlbumDetails(albumIndex,false)}});
 }
 selectAlbum(0,true,false);
@@ -186,7 +195,7 @@ function scheduleWish(delay){clearTimeout(wishTimer);wishTimer=setTimeout(functi
 fetch('/api/wishes?limit=20').then(function(r){return r.ok?r.json():{wishes:[]}}).then(function(d){wishQueue=(d.wishes||[]).map(function(w){return[w.displayName,w.message]});scheduleWish(1000)}).catch(function(){scheduleWish(5000)});$('#sendWish').onclick=async function(){var n=$('#wishName').value.trim(),m=$('#wishText').value.trim(),btn=this;if(!n||!m)return;btn.disabled=true;var old=btn.textContent;btn.textContent='ĐANG GỬI...';var er=document.getElementById('wishApiError');if(!er){er=document.createElement('div');er.id='wishApiError';er.className='submit-error';btn.before(er)}er.hidden=true;try{var c='';try{c=new URLSearchParams(location.search).get('i')||''}catch(e){}var d=await postJson('/api/wishes',{invitationCode:c,displayName:n,message:m});wishQueue.unshift([n,m]);wi=0;$('#wishText').value='';closeSheets();scheduleWish(Math.max(0,lastWishSpacing-(Date.now()-lastWishAt)))}catch(e){er.textContent=e.message||'Chưa thể gửi lời chúc.';er.hidden=false}finally{btn.disabled=false;btn.textContent=old}};$('#hideWishes').onclick=function(){wishHidden=!wishHidden;$$('.bubble').forEach(function(x){x.remove()});$('#hideWishes').textContent=wishHidden?'♡':'×';if(!wishHidden)scheduleWish(200)};
 var heart=$('#heart');function fire(e){e.preventDefault();var r=heart.getBoundingClientRect(),h=document.createElement('span');h.className='heart-fly';h.textContent='♥';h.style.left=(r.left+r.width/2-8)+'px';h.style.top=(r.top+5)+'px';h.style.color=Math.random()>.45?'#a71923':'#d99a9f';h.style.setProperty('--dx',(Math.random()*160-80)+'px');h.style.setProperty('--rot',(Math.random()*80-40)+'deg');document.body.appendChild(h);setTimeout(function(){h.remove()},1900)}heart.addEventListener('pointerdown',fire,{passive:false});heart.addEventListener('dblclick',function(e){e.preventDefault()});
 
-var lb=$('#lightbox'),lbImg=$('#lbImg'),lbCount=$('#lbCount'),idx=0;function show(i){idx=i;lbImg.src='assets/'+album[i];lbCount.textContent=(i+1)+' / '+album.length;lb.classList.add('open')}var filmSwiped=false;filmMain.addEventListener('click',function(e){if(filmSwiped){filmSwiped=false;e.preventDefault();return}show(albumIndex)});$('#lbClose').onclick=function(){lb.classList.remove('open')};var sx=0;lb.addEventListener('touchstart',function(e){sx=e.touches[0].clientX},{passive:true});lb.addEventListener('touchend',function(e){var dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>45)show((idx+(dx<0?1:-1)+album.length)%album.length)},{passive:true});
+var lb=$('#lightbox'),lbImg=$('#lbImg'),lbCount=$('#lbCount'),idx=0;function show(i){idx=i;lbImg.src='assets/'+album[i];lbCount.textContent=(i+1)+' / '+album.length;lb.classList.add('open')}var filmSwiped=false;filmFrame.addEventListener('click',function(e){if(filmSwiped){filmSwiped=false;e.preventDefault();return}show(albumIndex)});$('#lbClose').onclick=function(){lb.classList.remove('open')};var sx=0;lb.addEventListener('touchstart',function(e){sx=e.touches[0].clientX},{passive:true});lb.addEventListener('touchend',function(e){var dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>45)show((idx+(dx<0?1:-1)+album.length)%album.length)},{passive:true});
 })();
 /* V1.4 RSVP replaced by V7 overlay below */
 /* ===== V1.5 Modern Luxury Motion Choreography ===== */

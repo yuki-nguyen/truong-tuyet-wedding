@@ -733,7 +733,7 @@ body.rsvp-open{position:static!important;width:auto!important;left:auto!importan
 .gallery .film-incoming {
   opacity: 0;
   pointer-events: none;
-  transition: opacity .36s ease;
+  transition: opacity .28s ease;
   will-change: opacity;
 }
 .gallery .film-incoming.is-visible { opacity: 1; }
