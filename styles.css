@@ -737,6 +737,8 @@ body.rsvp-open{position:static!important;width:auto!important;left:auto!importan
   will-change: opacity;
 }
 .gallery .film-incoming.is-visible { opacity: 1; }
+.dock { grid-template-columns: minmax(0,1fr) 90px 66px; }
+#rsvpDock small { line-height: 1.1; }
 .gallery .film-counter { z-index: 2; }
 @media (prefers-reduced-motion: reduce) {
   .gallery .film-incoming { transition-duration: .01ms; }
