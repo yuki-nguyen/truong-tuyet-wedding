@@ -699,3 +699,15 @@ body.rsvp-open{position:static!important;width:auto!important;left:auto!importan
   .rsvp-state h2 { font-size: 21.93px !important; }
   .gift-qr-image { width: min(326.8px,330px); }
 }
+
+/* Keep the requested wish stream active even when a system-wide motion setting
+   disables generic animations; hero text must remain visible in that setting. */
+@media (prefers-reduced-motion: reduce) {
+  body.hero-copy-in .hero .hero-copy { opacity: 1 !important; transform: none !important; }
+  body .wish-stream .bubble {
+    animation-name: wishScroll !important;
+    animation-duration: var(--wish-duration, 10s) !important;
+    animation-timing-function: linear !important;
+    animation-fill-mode: forwards !important;
+  }
+}
