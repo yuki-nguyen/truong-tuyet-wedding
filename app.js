@@ -120,7 +120,7 @@ filmStrip.addEventListener('click',function(e){var b=e.target.closest('.film-thu
 function openSheet(s){backdrop.classList.add('open');s.classList.add('open');stream.style.display='none'}function closeSheets(){backdrop.classList.remove('open');wishModal.classList.remove('open');giftModal.classList.remove('open');stream.style.display='flex'}$('#wishOpen').onclick=function(){openSheet(wishModal)};var giftDock=$('#gift'),giftBody=$('#giftBody');if(giftDock)giftDock.onclick=function(){openSheet(giftModal)};if(giftBody)giftBody.onclick=function(){openSheet(giftModal)};backdrop.onclick=closeSheets;$$('.close').forEach(function(x){x.onclick=closeSheets});
 var wishHidden=false,wishQueue=[],wi=0,wishTimer=null,lastWishAt=0;
 function bubble(n,m){
- if(wishHidden||document.body.classList.contains('rsvp-open')||!n||!m)return;
+ if(wishHidden||getComputedStyle(stream).display==='none'||document.body.classList.contains('rsvp-open')||!n||!m)return;
  var b=document.createElement('div');b.className='bubble';
  var x=document.createElement('b');x.textContent=n+':';b.appendChild(x);b.appendChild(document.createTextNode(' '+m));
  stream.appendChild(b);
@@ -135,7 +135,7 @@ function bubble(n,m){
  return height;
 }
 function scheduleWish(delay){clearTimeout(wishTimer);wishTimer=setTimeout(function(){
- if(wishQueue.length&&!wishHidden&&stream.style.display!=='none'&&!document.body.classList.contains('rsvp-open')){
+ if(wishQueue.length&&!wishHidden&&getComputedStyle(stream).display!=='none'&&!document.body.classList.contains('rsvp-open')){
   var w=wishQueue[wi++%wishQueue.length],height=bubble(w[0],w[1]);
   scheduleWish(Math.max(4300,((height||90)+22)/28*1000));
  }else scheduleWish(1000);
