@@ -118,16 +118,29 @@ filmMain.addEventListener('touchstart',function(e){if(!e.touches||!e.touches.len
 filmMain.addEventListener('touchend',function(e){if(!filmTracking||!e.changedTouches||!e.changedTouches.length)return;filmTracking=false;var dx=e.changedTouches[0].clientX-filmStartX,dy=e.changedTouches[0].clientY-filmStartY;if(Math.abs(dx)>48&&Math.abs(dx)>Math.abs(dy)*1.15){filmSwiped=true;selectAlbum(albumIndex+(dx<0?1:-1),false,true);setTimeout(function(){filmSwiped=false},450)}},{passive:true});
 filmStrip.addEventListener('click',function(e){var b=e.target.closest('.film-thumb');if(b)selectAlbum(Number(b.dataset.i),false,true)});
 function openSheet(s){backdrop.classList.add('open');s.classList.add('open');stream.style.display='none'}function closeSheets(){backdrop.classList.remove('open');wishModal.classList.remove('open');giftModal.classList.remove('open');stream.style.display='flex'}$('#wishOpen').onclick=function(){openSheet(wishModal)};var giftDock=$('#gift'),giftBody=$('#giftBody');if(giftDock)giftDock.onclick=function(){openSheet(giftModal)};if(giftBody)giftBody.onclick=function(){openSheet(giftModal)};backdrop.onclick=closeSheets;$$('.close').forEach(function(x){x.onclick=closeSheets});
-var wishHidden=false,wishQueue=[],wi=0;
+var wishHidden=false,wishQueue=[],wi=0,wishTimer=null,lastWishAt=0;
 function bubble(n,m){
  if(wishHidden||document.body.classList.contains('rsvp-open')||!n||!m)return;
  var b=document.createElement('div');b.className='bubble';
  var x=document.createElement('b');x.textContent=n+':';b.appendChild(x);b.appendChild(document.createTextNode(' '+m));
  stream.appendChild(b);
- var visible=stream.querySelectorAll('.bubble');while(visible.length>2){visible[0].remove();visible=stream.querySelectorAll('.bubble')}
+ // Each card starts below the clipped area and leaves above it at a constant speed.
+ // Absolute positioning prevents a new card from shifting cards already in flight.
+ var height=b.offsetHeight,travel=stream.clientHeight+height+12,speed=28;
+ b.style.top=stream.clientHeight+'px';
+ b.style.setProperty('--wish-travel',-travel+'px');
+ b.style.animationDuration=(travel/speed)+'s';
+ lastWishAt=Date.now();
  b.addEventListener('animationend',function(){b.remove()},{once:true});
+ return height;
 }
-fetch('/api/wishes?limit=20').then(function(r){return r.ok?r.json():{wishes:[]}}).then(function(d){wishQueue=(d.wishes||[]).map(function(w){return[w.displayName,w.message]})});setInterval(function(){if(wishQueue.length&&!wishHidden){var w=wishQueue[wi++%wishQueue.length];bubble(w[0],w[1])}},4300);$('#sendWish').onclick=async function(){var n=$('#wishName').value.trim(),m=$('#wishText').value.trim(),btn=this;if(!n||!m)return;btn.disabled=true;var old=btn.textContent;btn.textContent='ĐANG GỬI...';var er=document.getElementById('wishApiError');if(!er){er=document.createElement('div');er.id='wishApiError';er.className='submit-error';btn.before(er)}er.hidden=true;try{var c='';try{c=new URLSearchParams(location.search).get('i')||''}catch(e){}var d=await postJson('/api/wishes',{invitationCode:c,displayName:n,message:m});wishQueue.unshift([n,m]);bubble(n,m);$('#wishText').value='';closeSheets()}catch(e){er.textContent=e.message||'Chưa thể gửi lời chúc.';er.hidden=false}finally{btn.disabled=false;btn.textContent=old}};$('#hideWishes').onclick=function(){wishHidden=!wishHidden;$$('.bubble').forEach(function(x){x.remove()});$('#hideWishes').textContent=wishHidden?'♡':'×'};
+function scheduleWish(delay){clearTimeout(wishTimer);wishTimer=setTimeout(function(){
+ if(wishQueue.length&&!wishHidden&&stream.style.display!=='none'&&!document.body.classList.contains('rsvp-open')){
+  var w=wishQueue[wi++%wishQueue.length],height=bubble(w[0],w[1]);
+  scheduleWish(Math.max(4300,((height||90)+22)/28*1000));
+ }else scheduleWish(1000);
+},delay)}
+fetch('/api/wishes?limit=20').then(function(r){return r.ok?r.json():{wishes:[]}}).then(function(d){wishQueue=(d.wishes||[]).map(function(w){return[w.displayName,w.message]});scheduleWish(1000)}).catch(function(){scheduleWish(5000)});$('#sendWish').onclick=async function(){var n=$('#wishName').value.trim(),m=$('#wishText').value.trim(),btn=this;if(!n||!m)return;btn.disabled=true;var old=btn.textContent;btn.textContent='ĐANG GỬI...';var er=document.getElementById('wishApiError');if(!er){er=document.createElement('div');er.id='wishApiError';er.className='submit-error';btn.before(er)}er.hidden=true;try{var c='';try{c=new URLSearchParams(location.search).get('i')||''}catch(e){}var d=await postJson('/api/wishes',{invitationCode:c,displayName:n,message:m});wishQueue.unshift([n,m]);wi=0;$('#wishText').value='';closeSheets();scheduleWish(Math.max(0,4300-(Date.now()-lastWishAt)))}catch(e){er.textContent=e.message||'Chưa thể gửi lời chúc.';er.hidden=false}finally{btn.disabled=false;btn.textContent=old}};$('#hideWishes').onclick=function(){wishHidden=!wishHidden;$$('.bubble').forEach(function(x){x.remove()});$('#hideWishes').textContent=wishHidden?'♡':'×';if(!wishHidden)scheduleWish(200)};
 var heart=$('#heart');function fire(e){e.preventDefault();var r=heart.getBoundingClientRect(),h=document.createElement('span');h.className='heart-fly';h.textContent='♥';h.style.left=(r.left+r.width/2-8)+'px';h.style.top=(r.top+5)+'px';h.style.color=Math.random()>.45?'#a71923':'#d99a9f';h.style.setProperty('--dx',(Math.random()*160-80)+'px');h.style.setProperty('--rot',(Math.random()*80-40)+'deg');document.body.appendChild(h);setTimeout(function(){h.remove()},1900)}heart.addEventListener('pointerdown',fire,{passive:false});heart.addEventListener('dblclick',function(e){e.preventDefault()});
 
 var lb=$('#lightbox'),lbImg=$('#lbImg'),lbCount=$('#lbCount'),idx=0;function show(i){idx=i;lbImg.src='assets/'+album[i];lbCount.textContent=(i+1)+' / '+album.length;lb.classList.add('open')}var filmSwiped=false;filmMain.addEventListener('click',function(e){if(filmSwiped){filmSwiped=false;e.preventDefault();return}show(albumIndex)});$('#lbClose').onclick=function(){lb.classList.remove('open')};var sx=0;lb.addEventListener('touchstart',function(e){sx=e.touches[0].clientX},{passive:true});lb.addEventListener('touchend',function(e){var dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>45)show((idx+(dx<0?1:-1)+album.length)%album.length)},{passive:true});
