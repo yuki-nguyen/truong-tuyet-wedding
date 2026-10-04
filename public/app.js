@@ -492,6 +492,38 @@ m.addEventListener('click',function(e){e.stopPropagation();try{if(window.player&
   /* main creates a stacking context (z-index: 0). Move the fixed RSVP sheet to
      body so its z-index sits above the dock while the dock stays laid out below. */
   document.body.appendChild(ov);
+  if(location.pathname.replace(/\/+$/,'')==='/tanhon'){
+    var formUrl='https://docs.google.com/forms/d/e/1FAIpQLSdgmaXk9MGGNb41TCxIy85FrIQsVzz5kgolYljYoV-IWlq8fA/viewform';
+    var panel=ov.querySelector('.rsvp-panel');
+    panel.classList.add('google-form-panel');
+    panel.innerHTML='<div class="google-form-header"><strong id="rsvpTitle">XÁC NHẬN THAM DỰ</strong><a href="'+formUrl+'" target="_blank" rel="noopener noreferrer">Mở riêng ↗</a><button id="rsvpClose" class="rsvp-close" type="button" aria-label="Đóng xác nhận tham dự">×</button></div><iframe class="google-form-frame" title="Google Form xác nhận tham dự Lễ Tân Hôn" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>';
+    var frame=panel.querySelector('iframe'),closeGoogle=panel.querySelector('#rsvpClose'),dockGoogle=document.getElementById('rsvpDock'),closeTimer=0;
+    function openGoogle(){
+      clearTimeout(closeTimer);
+      if(!frame.hasAttribute('src'))frame.src=formUrl+'?embedded=true';
+      document.documentElement.classList.add('rsvp-open');
+      document.body.classList.add('rsvp-open');
+      ov.classList.add('open');
+      ov.setAttribute('aria-hidden','false');
+      closeGoogle.focus({preventScroll:true});
+    }
+    function hideGoogle(){
+      if(!ov.classList.contains('open'))return;
+      ov.classList.remove('open');
+      ov.setAttribute('aria-hidden','true');
+      closeTimer=setTimeout(function(){
+        if(ov.classList.contains('open'))return;
+        document.documentElement.classList.remove('rsvp-open');
+        document.body.classList.remove('rsvp-open');
+        try{open.focus({preventScroll:true})}catch(e){}
+      },740);
+    }
+    open.onclick=openGoogle;
+    if(dockGoogle)dockGoogle.onclick=openGoogle;
+    closeGoogle.onclick=hideGoogle;
+    document.addEventListener('keydown',function(e){if(e.key==='Escape'&&ov.classList.contains('open'))hideGoogle()});
+    return;
+  }
   var form=document.getElementById('rsvpFormState'),loading=document.getElementById('rsvpLoading'),success=document.getElementById('rsvpSuccess'),name=document.getElementById('rsvpName'),yes=document.getElementById('rsvpYes'),no=document.getElementById('rsvpNo'),partyRow=document.getElementById('partyRow'),minus=document.getElementById('partyMinus'),plus=document.getElementById('partyPlus'),partyEl=document.getElementById('partyCount'),msg=document.getElementById('rsvpMessage'),send=document.getElementById('rsvpSend'),nameErr=document.getElementById('rsvpNameError'),submitErr=document.getElementById('rsvpError');
   var attending=true,party=1,scrollY=0,historyAdded=false;try{var g=new URLSearchParams(location.search).get('guest');if(g)name.value=g}catch(e){}
   function choose(v){attending=v;yes.classList.toggle('active',v);no.classList.toggle('active',!v);partyRow.hidden=!v}yes.onclick=function(){choose(true)};no.onclick=function(){choose(false)};minus.onclick=function(){party=Math.max(1,party-1);partyEl.textContent=party};plus.onclick=function(){party+=1;partyEl.textContent=party};

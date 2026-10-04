@@ -742,6 +742,13 @@ body.rsvp-open{position:static!important;width:auto!important;left:auto!importan
 /* Keep the dock laid out beneath the RSVP overlay, just like the gift sheet.
    The overlay's higher z-index covers it until the dialog closes. */
 body.rsvp-open .dock.show { display: grid !important; }
+/* Tân Hôn uses Google's own RSVP UI inside the existing invitation sheet. */
+.rsvp-panel.google-form-panel { padding: 0 !important; display: flex; flex-direction: column; overflow: hidden; }
+.google-form-header { flex: 0 0 52px; display: flex; align-items: center; gap: 10px; padding: 0 12px 0 18px; background: #fff9f0; border-bottom: 1px solid #ead8cd; }
+.google-form-header strong { flex: 1; color: #7b1118; font: 600 13px Georgia,serif; letter-spacing: .08em; }
+.google-form-header a { color: #7b1118; font: 12px Georgia,serif; text-decoration: underline; white-space: nowrap; }
+.google-form-header .rsvp-close { position: static !important; flex: 0 0 42px; width: 42px; height: 42px; color: #69413b; }
+.google-form-frame { flex: 1 1 auto; display: block; width: 100%; min-height: 0; border: 0; background: #fff9f0; }
 .gallery .film-counter { z-index: 2; }
 @media (prefers-reduced-motion: reduce) {
   .gallery .film-incoming { transition-duration: .01ms; }
