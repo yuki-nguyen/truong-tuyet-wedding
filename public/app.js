@@ -492,7 +492,7 @@ m.addEventListener('click',function(e){e.stopPropagation();try{if(window.player&
   /* main creates a stacking context (z-index: 0). Move the fixed RSVP sheet to
      body so its z-index sits above the dock while the dock stays laid out below. */
   document.body.appendChild(ov);
-  if(location.pathname.replace(/\/+$/,'')==='/tanhon'){
+  if(['','/tanhon'].includes(location.pathname.replace(/\/+$/,''))){
     var formUrl='https://docs.google.com/forms/d/e/1FAIpQLSdgmaXk9MGGNb41TCxIy85FrIQsVzz5kgolYljYoV-IWlq8fA/viewform';
     var panel=ov.querySelector('.rsvp-panel');
     panel.classList.add('google-form-panel');
